@@ -1,0 +1,391 @@
+# 背包问题整合
+
+---
+
+### 1. **01背包问题**
+
+- **特点**：每个物品只能选 **0或1次**，不可重复
+
+- **状态转移方程**：
+
+  ```cpp
+  if (w >= v[i]) dp[w] = max(dp[w], dp[w - v[i]] + p[i]);
+  ```
+
+- **遍历顺序**：  
+
+  - 物品正序遍历（从第1个到第m个）  
+  - 背包容量逆序遍历（从n到v[i]，防止重复选择）  
+
+- **核心代码**：
+
+  ```cpp
+  #include <vector>
+  #include <algorithm>
+  using namespace std;
+  
+  /*
+  变量说明：
+  - n: 背包容量
+  - m: 物品数量
+  - v: 物品体积，v[i]表示第i个物品的体积
+  - p: 物品价值，p[i]表示第i个物品的价值
+  - dp: 动态规划数组，dp[w]表示容量为w时的最大价值
+  */
+  int n, m;
+  vector<int> v, p;
+  vector<int> dp(n + 1, 0);
+  
+  for (int i = 0; i < m; ++i) {          // 遍历物品
+      for (int w = n; w >= v[i]; --w) {  // 逆序背包容量
+          dp[w] = max(dp[w], dp[w - v[i]] + p[i]);
+      }
+  }
+  ```
+
+- **洛谷题目**：[P1048 采药](https://www.luogu.com.cn/problem/P1048)  
+  **题意**：在时间限制内选择草药，每种草药只能采一次，求最大价值。
+
+---
+
+### 2. **完全背包问题**
+
+- **特点**：物品可以选 **无限次**  
+
+- **状态转移方程**：与01背包相同  
+
+- **遍历顺序**：  
+
+  - 物品正序遍历  
+  - 背包容量正序遍历（从v[i]到n，允许重复）  
+
+- **核心代码**：
+
+  ```cpp
+  #include <vector>
+  #include <algorithm>
+  using namespace std;
+  
+  /*
+  变量说明：
+  - n: 背包容量
+  - m: 物品数量
+  - v: 物品体积，v[i]表示第i个物品的体积
+  - p: 物品价值，p[i]表示第i个物品的价值
+  - dp: 动态规划数组，dp[w]表示容量为w时的最大价值
+  */
+  int n, m;
+  vector<int> v, p;
+  vector<int> dp(n + 1, 0);
+  
+  for (int i = 0; i < m; ++i) {          // 遍历物品
+      for (int w = v[i]; w <= n; ++w) {  // 正序背包容量
+          dp[w] = max(dp[w], dp[w - v[i]] + p[i]);
+      }
+  }
+  ```
+
+- **洛谷题目**：[P1616 疯狂的采药](https://www.luogu.com.cn/problem/P1616)  
+  **题意**：无限次采药，求时间限制内的最大价值。
+
+---
+
+### 3. **多重背包问题**
+
+- **特点**：物品最多选 **s[i]次**  
+
+- **状态转移方程**：
+
+  ```cpp
+  for (k = 1; k <= s[i]; k++) 
+      dp[w] = max(dp[w], dp[w - k*v[i]] + k*p[i]);
+  ```
+
+- **遍历顺序**：  
+
+  - 二进制拆分物品后按01背包处理  
+  - 容量逆序遍历  
+
+- **核心代码**：
+
+  ```cpp
+  #include <vector>
+  #include <algorithm>
+  using namespace std;
+  
+  /*
+  变量说明：
+  - n: 背包容量
+  - m: 物品数量
+  - v: 物品体积，v[i]表示第i个物品的体积
+  - p: 物品价值，p[i]表示第i个物品的价值
+  - s: 物品数量限制，s[i]表示第i个物品最多选s[i]次
+  - dp: 动态规划数组，dp[w]表示容量为w时的最大价值
+  */
+  int n, m;
+  vector<int> v, p, s;
+  vector<int> dp(n + 1, 0);
+  
+  // 二进制拆分
+  vector<pair<int, int>> items; // {体积, 价值}
+  for (int i = 0; i < m; ++i) {
+      int num = s[i];
+      for (int k = 1; k <= num; k *= 2) {
+          items.push_back({k * v[i], k * p[i]});
+          num -= k;
+      }
+      if (num > 0) {
+          items.push_back({num * v[i], num * p[i]});
+      }
+  }
+  
+  // 按01背包处理
+  for (auto &item : items) {
+      for (int w = n; w >= item.first; --w) {
+          dp[w] = max(dp[w], dp[w - item.first] + item.second);
+      }
+  }
+  ```
+
+- **洛谷题目**：[P1776 宝物筛选](https://www.luogu.com.cn/problem/P1776)  
+  **题意**：物品有数量限制，求容量内的最大价值。
+
+---
+
+### 4. **多维背包问题**
+
+- **特点**：背包有 **多个维度限制**（如体积+重量）  
+
+- **状态转移方程**：
+
+  ```cpp
+  if (w1 >= v1[i] && w2 >= v2[i])
+      dp[w1][w2] = max(dp[w1][w2], dp[w1-v1[i]][w2-v2[i]] + p[i]);
+  ```
+
+- **遍历顺序**：  
+
+  - 所有维度逆序遍历  
+
+- **核心代码**：
+
+  ```cpp
+  #include <vector>
+  #include <algorithm>
+  using namespace std;
+  
+  /*
+  变量说明：
+  - n1: 第一维度容量（如体积）
+  - n2: 第二维度容量（如重量）
+  - m: 物品数量
+  - v1: 物品在第一维度的体积，v1[i]表示第i个物品的体积
+  - v2: 物品在第二维度的体积，v2[i]表示第i个物品的重量
+  - p: 物品价值，p[i]表示第i个物品的价值
+  - dp: 动态规划数组，dp[w1][w2]表示容量为w1和w2时的最大价值
+  */
+  int n1, n2, m;
+  vector<int> v1, v2, p;
+  vector<vector<int>> dp(n1 + 1, vector<int>(n2 + 1, 0));
+  
+  for (int i = 0; i < m; ++i) {
+      for (int w1 = n1; w1 >= v1[i]; --w1) {
+          for (int w2 = n2; w2 >= v2[i]; --w2) {
+              dp[w1][w2] = max(dp[w1][w2], dp[w1 - v1[i]][w2 - v2[i]] + p[i]);
+          }
+      }
+  }
+  ```
+
+- **洛谷题目**：[P1509 过河问题](https://www.luogu.com.cn/problem/P1509)  
+  **题意**：船只同时有载重和体积限制，求最大价值。
+
+---
+
+### 5. **分组背包问题**
+
+- **特点**：每组内 **只能选一个物品**  
+
+- **状态转移方程**：同01背包，但需遍历组内物品  
+
+- **遍历顺序**：  
+
+  1. 遍历所有分组  
+  2. 容量逆序  
+  3. 遍历组内物品  
+
+- **核心代码**：
+
+  ```cpp
+  #include <vector>
+  #include <algorithm>
+  using namespace std;
+  
+  /*
+  变量说明：
+  - n: 背包容量
+  - k: 分组数量
+  - group: 分组物品，group[g]表示第g组的物品列表
+  - v: 物品体积，v[i]表示第i个物品的体积
+  - p: 物品价值，p[i]表示第i个物品的价值
+  - dp: 动态规划数组，dp[w]表示容量为w时的最大价值
+  */
+  int n, k;
+  vector<vector<int>> group; // group[g][i]表示第g组的第i个物品的索引
+  vector<int> v, p;
+  vector<int> dp(n + 1, 0);
+  
+  for (int g = 0; g < k; ++g) { // 遍历k个组
+      for (int w = n; w >= 0; --w) {
+          for (int i : group[g]) { // 遍历组内物品
+              if (w >= v[i]) {
+                  dp[w] = max(dp[w], dp[w - v[i]] + p[i]);
+              }
+          }
+      }
+  }
+  ```
+
+- **洛谷题目**：[P1757 通天之分组背包](https://www.luogu.com.cn/problem/P1757)  
+  **题意**：物品分组，每组只能选一个，求最大价值。
+
+---
+
+### 6. **混合背包问题**
+
+- **特点**：混合 **01背包、完全背包、多重背包**  
+
+- **状态转移方程**：根据物品类型选择对应逻辑  
+
+- **遍历顺序**：  
+
+  - 对每个物品单独处理其类型对应的遍历顺序  
+
+- **核心代码**：
+
+  ```cpp
+  #include <vector>
+  #include <algorithm>
+  using namespace std;
+  
+  /*
+  变量说明：
+  - n: 背包容量
+  - m: 物品数量
+  - v: 物品体积，v[i]表示第i个物品的体积
+  - p: 物品价值，p[i]表示第i个物品的价值
+  - type: 物品类型，type[i]表示第i个物品的类型（0:01背包, 1:完全背包, 2:多重背包）
+  - s: 物品数量限制，s[i]表示第i个物品最多选s[i]次（仅对多重背包有效）
+  - dp: 动态规划数组，dp[w]表示容量为w时的最大价值
+  */
+  int n, m;
+  vector<int> v, p, type, s;
+  vector<int> dp(n + 1, 0);
+  
+  for (int i = 0; i < m; ++i) {
+      if (type[i] == 0) { // 01背包
+          for (int w = n; w >= v[i]; --w) 
+              dp[w] = max(dp[w], dp[w - v[i]] + p[i]);
+      } else if (type[i] == 1) { // 完全背包
+          for (int w = v[i]; w <= n; ++w)
+              dp[w] = max(dp[w], dp[w - v[i]] + p[i]);
+      } else { // 多重背包（二进制拆分）
+          int num = s[i];
+          for (int k = 1; k <= num; k *= 2) {
+              for (int w = n; w >= k * v[i]; --w) {
+                  dp[w] = max(dp[w], dp[w - k * v[i]] + k * p[i]);
+              }
+              num -= k;
+          }
+          if (num > 0) {
+              for (int w = n; w >= num * v[i]; --w) {
+                  dp[w] = max(dp[w], dp[w - num * v[i]] + num * p[i]);
+              }
+          }
+      }
+  }
+  ```
+
+- **洛谷题目**：[P1833 樱花](https://www.luogu.com.cn/problem/P1833)  
+  **题意**：混合01、完全、多重背包，求时间内的最大观赏值。
+
+---
+
+### 7. **有依赖的背包问题**
+
+- **特点**：物品间存在 **树形依赖关系**（如选父节点必须选子节点）  
+
+- **状态转移方程**：递归合并子树结果，类似分组背包  
+
+- **遍历顺序**：  
+
+  1. 后序遍历依赖树  
+  2. 合并子树结果到父节点时使用分组背包逻辑  
+
+- **核心代码**：
+
+  ```cpp
+  #include <vector>
+  #include <algorithm>
+  using namespace std;
+  
+  /*
+  变量说明：
+  - n: 背包容量
+  - m: 物品数量
+  - v: 物品体积，v[i]表示第i个物品的体积
+  - p: 物品价值，p[i]表示第i个物品的价值
+  - tree: 依赖树，tree[u]表示节点u的子节点列表
+  - dp: 动态规划数组，dp[w]表示容量为w时的最大价值
+  */
+  int n, m;
+  vector<int> v, p;
+  vector<vector<int>> tree; // tree[u]表示节点u的子节点列表
+  vector<int> dp(n + 1, 0);
+  
+  void dfs(int u, vector<int> &dp) {
+      for (int son : tree[u]) { // 遍历子节点
+          dfs(son, dp); // 递归处理子树
+          vector<int> tmp = dp; // 临时数组保存状态
+          // 合并子树结果（分组背包逻辑）
+          for (int w = n; w >= 0; --w) {
+              for (int k = w; k >= v[son]; --k) {
+                  tmp[w] = max(tmp[w], tmp[w - k] + p[son]);
+              }
+          }
+          dp = tmp;
+      }
+      // 选父节点
+      if (u != 0) { // 假设0为虚拟根节点
+          for (int w = n; w >= v[u]; --w) {
+              dp[w] = dp[w - v[u]] + p[u];
+          }
+      }
+  }
+  ```
+
+- **洛谷题目**：[P1064 金明的预算方案](https://www.luogu.com.cn/problem/P1064)  
+  **题意**：主件和附件依赖，选主件时可选附件，求最大价值。
+
+---
+
+### 总结表格
+
+| 问题类型     | 特点             | 遍历顺序                 | 洛谷题目 |
+| ------------ | ---------------- | ------------------------ | -------- |
+| 01背包       | 物品选0或1次     | 物品正序，容量逆序       | P1048    |
+| 完全背包     | 物品无限选       | 物品正序，容量正序       | P1616    |
+| 多重背包     | 物品选有限次     | 二进制拆分后逆序容量     | P1776    |
+| 多维背包     | 多维度容量限制   | 所有维度逆序             | P1509    |
+| 分组背包     | 每组选1个        | 先组、后容量逆序、再物品 | P1757    |
+| 混合背包     | 混合多种背包类型 | 按类型分别处理           | P1833    |
+| 有依赖的背包 | 树形或主附件依赖 | 后序遍历树 + 分组背包    | P1064    |
+
+---
+
+**代码说明**：  
+
+- 所有代码均使用STL容器（如`vector`）实现，代码更简洁易读。  
+- 变量注释清晰，便于理解代码逻辑。  
+- 实际应用时需根据输入调整数组初始化和遍历范围。
+
